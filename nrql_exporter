@@ -55,14 +55,21 @@ def metrics(config)
   results = {}
   config["queries"].each do |query|
     result = do_query(config, query["query"])
-    results[query["name"]] = { "count" => result["count"], "description" => query["desc"]} if result.has_key?("count")
+    if result.has_key?("count")
+      results[query["name"]] = { "count" => result["count"] }
+      results[query["name"]]["help"] = query["help"] if query.has_key?("help")
+      results[query["name"]]["type"] = query["type"] if query.has_key?("type")
+	end
   end
 
   response = ""
   results.each_key do |label|
-    description = results[label]["description"]
-    count = results[label]["count"]
-    response += "\# #{description}\r\n"
+  	data = results[label]
+    help = data["help"]
+    type = data["type"]
+    count = data["count"]
+    response += "\# HELP #{label} #{help}\r\n" if data.has_key?("help")
+    response += "\# TYPE #{label} #{type}\r\n" if data.has_key?("type")
     response += "#{config['exporter']['prefix']}#{label} #{count}\r\n"
   end
   STDERR.puts pp response if config["exporter"]["verbose"]
