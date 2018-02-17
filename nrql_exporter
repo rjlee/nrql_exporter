@@ -9,10 +9,26 @@ require 'socket'
 require 'pp'
 
 config = YAML::load_file('nrql_exporter.conf')
+unless config.has_key?("nr") && config["nr"].has_key?("api_key") && config["nr"].has_key?("account_id")
+  STDERR.puts "Missing new relic configuration information" 
+  exit 1
+end
+unless config.has_key?("queries") && !config["queries"].empty?
+  STDERR.puts "No NRQL queries defined"
+end
+unless config.has_key?("exporter") && config["exporter"].has_key?("host") && config["exporter"].has_key?("port")
+  STDERR.puts "No host and port defined"
+  exit 1
+end
+unless config.has_key?("exporter") && config["exporter"].has_key?("verbose")
+	config["exporter"]["verbose"] = false
+end
+
 server = TCPServer.new(config["exporter"]["host"], config["exporter"]["port"])
 
 def do_query(config, query)
   uri = URI.parse("https://insights-api.newrelic.com/v1/accounts/#{config['nr']['account_id']}/query?nrql=#{URI::encode(query)}")
+  STDERR.puts pp uri if config["exporter"]["verbose"]
   request = Net::HTTP::Get.new(uri)
   request["Accept"] = "application/json"
   request["X-Query-Key"] = config['nr']['api_key']
@@ -39,16 +55,17 @@ def metrics(config)
   results = {}
   config["queries"].each do |query|
     result = do_query(config, query["query"])
-    results[query["name"]] = { "counter" => result["count"], "description" => query["desc"]} if result.has_key?("count")
+    results[query["name"]] = { "count" => result["count"], "description" => query["desc"]} if result.has_key?("count")
   end
 
   response = ""
   results.each_key do |label|
     description = results[label]["description"]
-    counter = results[label]["counter"]
+    count = results[label]["count"]
     response += "\# #{description}\r\n"
-    response += "#{config['exporter']['prefix']}#{label}=#{counter}\r\n"
+    response += "#{config['exporter']['prefix']}#{label} #{count}\r\n"
   end
+  STDERR.puts pp response if config["exporter"]["verbose"]
   return response
 end
 
@@ -74,6 +91,7 @@ loop do
       socket.print "\r\n"
       socket.print response
     rescue StandardError => err
+      cached_response = ""
       socket.print "HTTP/1.1 500\r\n" +
                  "Content-Type: text/plain\r\n" +
                  "Connection: close\r\n"
