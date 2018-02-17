@@ -20,9 +20,14 @@ The exporter cache value in the configuration file specifies how long the last r
 
 ## Installation
 
-The `nrql_exporter` script has no dependancies other than a recent ruby version.  A configuration file `nrql_exporter.conf` should be added in the same directory as the exporter, with the appropraite configuration.
+The `nrql_exporter` script has no dependancies other than a recent ruby version.  A configuration file `nrql_exporter.conf` should be added in the same directory as the exporter, with the appropriate configuration.
 
 ```
+git clone https://github.com/rjlee/nrql_exporter.git
+cd nrql_exporter
+chmod u+x nrql_exporter
+cp nrql_exporter.sample.conf nrql_exporter.conf
+./nrql_exporter
 ```
 
 ## Running
