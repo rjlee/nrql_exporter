@@ -1,0 +1,30 @@
+# nrql_exporter
+
+The nrql_exporter is a simple ruby daemon that acts as a prometheus exporter.  It is designed to work with New Relic and allows NRQL queries to be exported in a telegraf format for consumption by tools such as prometheus.
+
+## Configuration
+
+The exporter expects a configuratIon file `nrql_exporter.conf` to be present in the same directory as the exporter.  The file requires an insights API key and the New Relic Account ID.  For more details on how to obtain these see https://docs.newrelic.com/docs/insights/insights-api/get-data/query-insights-event-data-api.
+
+### Query format
+
+The queries are expected to return a single counter value using a label of 'count'.  An example following this format is shown below:
+
+```
+SELECT count(result) as 'count' FROM SyntheticCheck WHERE monitorName=API'
+```
+
+### Response Cache
+
+The exporter cache value in the configuration file specifies how long the last response should be cached for (in seconds) before a new request to New Relic is made.  This allows control of the number of API requests being made to the New Relic origin.
+
+## Installation
+
+The `nrql_exporter` script has no dependancies other than a recent ruby version.  A configuration file `nrql_exporter.conf` should be added in the same directory as the exporter, with the appropraite configuration.
+
+```
+```
+
+## Running
+
+The script can be run as a daemon using an init script.  This is left as an exercise for the reader.

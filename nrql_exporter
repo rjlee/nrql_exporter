@@ -1,0 +1,91 @@
+#!/usr/bin/ruby
+
+require 'net/http'
+require 'uri'
+require 'open-uri'
+require 'json'
+require 'yaml'
+require 'socket'
+require 'pp'
+
+config = YAML::load_file('nrql_exporter.conf')
+server = TCPServer.new(config["exporter"]["host"], config["exporter"]["port"])
+
+def do_query(config, query)
+  uri = URI.parse("https://insights-api.newrelic.com/v1/accounts/#{config['nr']['account_id']}/query?nrql=#{URI::encode(query)}")
+  request = Net::HTTP::Get.new(uri)
+  request["Accept"] = "application/json"
+  request["X-Query-Key"] = config['nr']['api_key']
+
+  req_options = {
+    use_ssl: uri.scheme == "https",
+  }
+
+  response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+    http.request(request)
+  end
+
+  r = JSON.parse(response.body)
+  STDERR.puts pp r if config["exporter"]["verbose"]
+
+  results = {}
+  if r.has_key?("results") && !r["results"].empty?
+    results = r["results"].first
+  end
+  return results
+end
+
+def metrics(config)
+  results = {}
+  config["queries"].each do |query|
+    result = do_query(config, query["query"])
+    results[query["name"]] = { "counter" => result["count"], "description" => query["desc"]} if result.has_key?("count")
+  end
+
+  response = ""
+  results.each_key do |label|
+    description = results[label]["description"]
+    counter = results[label]["counter"]
+    response += "\# #{description}\r\n"
+    response += "#{config['exporter']['prefix']}#{label}=#{counter}\r\n"
+  end
+  return response
+end
+
+requested = Time.now()
+cached_response = ""
+loop do
+  socket = server.accept
+  request = socket.gets
+  STDERR.puts request if config["exporter"]["verbose"]
+  if request.match("/metrics")
+    begin
+      if Time.now-requested > config["exporter"]["cache"].to_i || cached_response.empty?
+        requested = Time.now
+        response = metrics(config)
+        cached_response = response
+      else
+        response = cached_response
+      end
+      socket.print "HTTP/1.1 200 OK\r\n" +
+                 "Content-Type: text/plain\r\n" +
+                 "Content-Length: #{response.bytesize}\r\n" +
+                 "Connection: close\r\n"
+      socket.print "\r\n"
+      socket.print response
+    rescue StandardError => err
+      socket.print "HTTP/1.1 500\r\n" +
+                 "Content-Type: text/plain\r\n" +
+                 "Connection: close\r\n"
+      socket.print "\r\n"
+      socket.print "Server Error\r\n"
+    end
+  else
+    socket.print "HTTP/1.1 404 Not Found\r\n" +
+               "Content-Type: text/plain\r\n" +
+               "Connection: close\r\n"
+    socket.print "\r\n"
+  end
+  socket.close
+end
+
