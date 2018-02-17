@@ -68,9 +68,9 @@ def metrics(config)
     help = data["help"]
     type = data["type"]
     count = data["count"]
-    response += "\# HELP #{label} #{help}\r\n" if data.has_key?("help")
-    response += "\# TYPE #{label} #{type}\r\n" if data.has_key?("type")
-    response += "#{config['exporter']['prefix']}#{label} #{count}\r\n"
+    response += "\# HELP #{label} #{help}\n" if data.has_key?("help")
+    response += "\# TYPE #{label} #{type}\n" if data.has_key?("type")
+    response += "#{config['exporter']['prefix']}#{label} #{count}\n"
   end
   STDERR.puts pp response if config["exporter"]["verbose"]
   return response
@@ -91,25 +91,25 @@ loop do
       else
         response = cached_response
       end
-      socket.print "HTTP/1.1 200 OK\r\n" +
-                 "Content-Type: text/plain\r\n" +
-                 "Content-Length: #{response.bytesize}\r\n" +
-                 "Connection: close\r\n"
-      socket.print "\r\n"
+      socket.print "HTTP/1.1 200 OK\n" +
+                 "Content-Type: text/plain\n" +
+                 "Content-Length: #{response.bytesize}\n" +
+                 "Connection: close\n"
+      socket.print "\n"
       socket.print response
     rescue StandardError => err
       cached_response = ""
-      socket.print "HTTP/1.1 500\r\n" +
-                 "Content-Type: text/plain\r\n" +
-                 "Connection: close\r\n"
-      socket.print "\r\n"
-      socket.print "Server Error\r\n"
+      socket.print "HTTP/1.1 500\n" +
+                 "Content-Type: text/plain\n" +
+                 "Connection: close\n"
+      socket.print "\n"
+      socket.print "Server Error\n"
     end
   else
-    socket.print "HTTP/1.1 404 Not Found\r\n" +
-               "Content-Type: text/plain\r\n" +
-               "Connection: close\r\n"
-    socket.print "\r\n"
+    socket.print "HTTP/1.1 404 Not Found\n" +
+               "Content-Type: text/plain\n" +
+               "Connection: close\n"
+    socket.print "\n"
   end
   socket.close
 end
