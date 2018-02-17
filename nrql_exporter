@@ -97,19 +97,27 @@ loop do
                  "Connection: close\n"
       socket.print "\n"
       socket.print response
-    rescue StandardError => err
+    rescue StandardError => e
       cached_response = ""
-      socket.print "HTTP/1.1 500\n" +
+      begin
+        socket.print "HTTP/1.1 500\n" +
+                   "Content-Type: text/plain\n" +
+                   "Connection: close\n"
+        socket.print "\n"
+        socket.print "Server Error\n"
+      rescue StandardError => e
+        # Captures client disconnect
+      end
+    end
+  else
+  	begin
+      socket.print "HTTP/1.1 404 Not Found\n" +
                  "Content-Type: text/plain\n" +
                  "Connection: close\n"
       socket.print "\n"
-      socket.print "Server Error\n"
-    end
-  else
-    socket.print "HTTP/1.1 404 Not Found\n" +
-               "Content-Type: text/plain\n" +
-               "Connection: close\n"
-    socket.print "\n"
+     rescue StandardError => e
+       # Captures client disconnect
+     end
   end
   socket.close
 end
