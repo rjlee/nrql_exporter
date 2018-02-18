@@ -31,6 +31,7 @@ def do_query(config, query)
   STDERR.puts pp uri if config["exporter"]["verbose"]
   request = Net::HTTP::Get.new(uri)
   request["Accept"] = "application/json"
+  request["User-Agent"] = "nrql_exporter"
   request["X-Query-Key"] = config['nr']['api_key']
 
   req_options = {
@@ -79,11 +80,11 @@ end
 requested = Time.now()
 cached_response = ""
 loop do
-  socket = server.accept
-  request = socket.gets
-  STDERR.puts request if config["exporter"]["verbose"]
-  if request.match("/metrics")
-    begin
+  begin
+    socket = server.accept
+    request = socket.gets
+    STDERR.puts request if config["exporter"]["verbose"]
+    if request.match("/metrics")
       if Time.now-requested > config["exporter"]["cache"].to_i || cached_response.empty?
         requested = Time.now
         response = metrics(config)
@@ -97,27 +98,23 @@ loop do
                  "Connection: close\n"
       socket.print "\n"
       socket.print response
-    rescue StandardError => e
-      cached_response = ""
-      begin
-        socket.print "HTTP/1.1 500\n" +
-                   "Content-Type: text/plain\n" +
-                   "Connection: close\n"
-        socket.print "\n"
-        socket.print "Server Error\n"
-      rescue StandardError => e
-        # Captures client disconnect
-      end
-    end
-  else
-  	begin
+    else
       socket.print "HTTP/1.1 404 Not Found\n" +
                  "Content-Type: text/plain\n" +
                  "Connection: close\n"
       socket.print "\n"
-     rescue StandardError => e
-       # Captures client disconnect
-     end
+    end
+  rescue StandardError => e
+    cached_response = ""
+    begin
+      socket.print "HTTP/1.1 500 Internal Server Error\n" +
+                   "Content-Type: text/plain\n" +
+                   "Connection: close\n"
+      socket.print "\n"
+      socket.print "Server Error\n"
+    rescue StandardError => e
+      # Captures client disconnect
+    end
   end
   socket.close
 end
