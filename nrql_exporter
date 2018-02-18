@@ -10,16 +10,22 @@ require 'pp'
 begin
   require 'typhoeus'
 rescue LoadError => e
-  # Catch if typheous not installed
+  # Catch if typhoeus not installed
 end
 
-config = YAML::load_file('nrql_exporter.conf')
+begin
+  config = YAML::load_file('nrql_exporter.conf')
+rescue StandardError => e
+  STDERR.puts "Failed to load configuration file: #{e}"
+  exit 1
+end
 unless config.has_key?("nr") && config["nr"].has_key?("api_key") && config["nr"].has_key?("account_id")
-  STDERR.puts "Missing new relic configuration information"
+  STDERR.puts "Missing New Relic configuration"
   exit 1
 end
 unless config.has_key?("queries") && !config["queries"].empty?
   STDERR.puts "No NRQL queries defined"
+  exit 1
 end
 unless config.has_key?("exporter") && config["exporter"].has_key?("host") && config["exporter"].has_key?("port")
   STDERR.puts "No host and port defined"
@@ -31,8 +37,9 @@ end
 unless config.has_key?("exporter") && config["exporter"].has_key?("timeout")
   config["exporter"]["timeout"] = 5
 end
-
-server = TCPServer.new(config["exporter"]["host"], config["exporter"]["port"])
+unless config.has_key?("exporter") && config["exporter"].has_key?("cache")
+  config["exporter"]["cache"] = 10
+end
 
 def headers(config)
   headers = Hash.new
@@ -49,7 +56,6 @@ end
 def parse_response(config, response)
   r = JSON.parse(response.body)
   STDERR.puts pp r if config["exporter"]["verbose"]
-
   results = {}
   if r.has_key?("results") && !r["results"].empty?
     results = r["results"].first
@@ -99,7 +105,6 @@ end
 def metrics(config)
   results = {}
   requests = do_queries(config) if defined?(Typhoeus)
-
   config["queries"].each do |query|
     result = defined?(Typhoeus) ? requests[query["name"]] : do_query(config, query["query"])
     if result.has_key?("count")
@@ -108,7 +113,6 @@ def metrics(config)
       results[query["name"]]["type"] = query["type"] if query.has_key?("type")
     end
   end
-
   response = ""
   results.each_key do |label|
     data = results[label]
@@ -123,6 +127,12 @@ def metrics(config)
   return response
 end
 
+begin
+  server = TCPServer.new(config["exporter"]["host"], config["exporter"]["port"])
+rescue StandardError => e
+  STDERR.puts "Failed to start server: #{e}"
+  exit 1
+end
 requested = Time.now()
 cached_response = ""
 loop do
