@@ -30,6 +30,13 @@ cp nrql_exporter.sample.conf nrql_exporter.conf
 ./nrql_exporter
 ```
 
+If the Typheous Gem is installed, then the exporter will parallelize requests to New Relic, which is recommended for larger volumes of queries.
+
+```
+gem install bundler
+bundle install
+```
+
 ## Running
 
 The script can be run as a daemon using an init script.  This is left as an exercise for the reader.
