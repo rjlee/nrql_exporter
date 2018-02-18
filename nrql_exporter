@@ -38,7 +38,10 @@ def do_query(config, query)
     use_ssl: uri.scheme == "https",
   }
 
-  response = Net::HTTP.start(uri.hostname, uri.port, req_options) do |http|
+  proxy_addr = config["exporter"].has_key?("proxy_addr") ? config["exporter"]["proxy_addr"] : nil
+  proxy_port = config["exporter"].has_key?("proxy_port") ? config["exporter"]["proxy_port"] : nil
+
+  response = Net::HTTP.start(uri.hostname, uri.port, proxy_addr, proxy_port, req_options) do |http|
     http.request(request)
   end
 
