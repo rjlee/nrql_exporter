@@ -15,7 +15,7 @@ end
 
 config = YAML::load_file('nrql_exporter.conf')
 unless config.has_key?("nr") && config["nr"].has_key?("api_key") && config["nr"].has_key?("account_id")
-  STDERR.puts "Missing new relic configuration information" 
+  STDERR.puts "Missing new relic configuration information"
   exit 1
 end
 unless config.has_key?("queries") && !config["queries"].empty?
@@ -26,10 +26,10 @@ unless config.has_key?("exporter") && config["exporter"].has_key?("host") && con
   exit 1
 end
 unless config.has_key?("exporter") && config["exporter"].has_key?("verbose")
-	config["exporter"]["verbose"] = false
+  config["exporter"]["verbose"] = false
 end
 unless config.has_key?("exporter") && config["exporter"].has_key?("timeout")
-	config["exporter"]["timeout"] = 5
+  config["exporter"]["timeout"] = 5
 end
 
 server = TCPServer.new(config["exporter"]["host"], config["exporter"]["port"])
@@ -62,7 +62,7 @@ def do_query(config, query)
   request = Net::HTTP::Get.new(uri)
   headers = headers(config)
   headers.each_key do |header|
-  	request[header] = headers[header]
+    request[header] = headers[header]
   end
   req_options = {
     use_ssl: uri.scheme == "https",
@@ -80,14 +80,14 @@ def do_queries(config)
   requests = Hash.new
   hydra = Typhoeus::Hydra.hydra
   config["queries"].each do |q|
-  	query = q["query"]
-  	url = construct_query(config, query)
-  	options = { headers: headers(config), timeout: config["exporter"]["timeout"]}
-  	options[:proxy_addr] = config["exporter"]["proxy_addr"] if config["exporter"].has_key?("proxy_addr")
-  	options[:proxy_port] = config["exporter"]["proxy_port"] if config["exporter"].has_key?("proxy_port")
-  	request = Typhoeus::Request.new(url, options)
-  	hydra.queue(request)
-  	requests[q["name"]] = request
+    query = q["query"]
+    url = construct_query(config, query)
+    options = { headers: headers(config), timeout: config["exporter"]["timeout"]}
+    options[:proxy_addr] = config["exporter"]["proxy_addr"] if config["exporter"].has_key?("proxy_addr")
+    options[:proxy_port] = config["exporter"]["proxy_port"] if config["exporter"].has_key?("proxy_port")
+    request = Typhoeus::Request.new(url, options)
+    hydra.queue(request)
+    requests[q["name"]] = request
   end
   hydra.run
   requests.each_key do |name|
@@ -101,17 +101,17 @@ def metrics(config)
   requests = do_queries(config) if defined?(Typhoeus)
 
   config["queries"].each do |query|
-  	result = defined?(Typhoeus) ? requests[query["name"]] : do_query(config, query["query"]) 
+    result = defined?(Typhoeus) ? requests[query["name"]] : do_query(config, query["query"])
     if result.has_key?("count")
       results[query["name"]] = { "count" => result["count"] }
       results[query["name"]]["help"] = query["help"] if query.has_key?("help")
       results[query["name"]]["type"] = query["type"] if query.has_key?("type")
-	end
+    end
   end
 
   response = ""
   results.each_key do |label|
-  	data = results[label]
+    data = results[label]
     help = data["help"]
     type = data["type"]
     count = data["count"]
@@ -139,23 +139,23 @@ loop do
         response = cached_response
       end
       socket.print "HTTP/1.1 200 OK\n" +
-                 "Content-Type: text/plain\n" +
-                 "Content-Length: #{response.bytesize}\n" +
-                 "Connection: close\n"
+        "Content-Type: text/plain\n" +
+        "Content-Length: #{response.bytesize}\n" +
+        "Connection: close\n"
       socket.print "\n"
       socket.print response
     else
       socket.print "HTTP/1.1 404 Not Found\n" +
-                 "Content-Type: text/plain\n" +
-                 "Connection: close\n"
+        "Content-Type: text/plain\n" +
+        "Connection: close\n"
       socket.print "\n"
     end
   rescue StandardError => e
     cached_response = ""
     begin
       socket.print "HTTP/1.1 500 Internal Server Error\n" +
-                   "Content-Type: text/plain\n" +
-                   "Connection: close\n"
+        "Content-Type: text/plain\n" +
+        "Connection: close\n"
       socket.print "\n"
       socket.print "Server Error\n"
     rescue StandardError => e
@@ -164,4 +164,3 @@ loop do
   end
   socket.close
 end
-
