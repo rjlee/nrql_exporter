@@ -8,9 +8,9 @@ require 'yaml'
 require 'socket'
 require 'pp'
 begin
-	require 'typhoeus'
+  require 'typhoeus'
 rescue LoadError => e
-	# Catch if typheous not installed
+  # Catch if typheous not installed
 end
 
 config = YAML::load_file('nrql_exporter.conf')
@@ -27,6 +27,9 @@ unless config.has_key?("exporter") && config["exporter"].has_key?("host") && con
 end
 unless config.has_key?("exporter") && config["exporter"].has_key?("verbose")
 	config["exporter"]["verbose"] = false
+end
+unless config.has_key?("exporter") && config["exporter"].has_key?("timeout")
+	config["exporter"]["timeout"] = 5
 end
 
 server = TCPServer.new(config["exporter"]["host"], config["exporter"]["port"])
@@ -63,6 +66,7 @@ def do_query(config, query)
   end
   req_options = {
     use_ssl: uri.scheme == "https",
+    read_timeout: config["exporter"]["timeout"],
   }
   proxy_addr = config["exporter"].has_key?("proxy_addr") ? config["exporter"]["proxy_addr"] : nil
   proxy_port = config["exporter"].has_key?("proxy_port") ? config["exporter"]["proxy_port"] : nil
@@ -78,7 +82,7 @@ def do_queries(config)
   config["queries"].each do |q|
   	query = q["query"]
   	url = construct_query(config, query)
-  	options = { headers: headers(config)}
+  	options = { headers: headers(config), timeout: config["exporter"]["timeout"]}
   	options[:proxy_addr] = config["exporter"]["proxy_addr"] if config["exporter"].has_key?("proxy_addr")
   	options[:proxy_port] = config["exporter"]["proxy_port"] if config["exporter"].has_key?("proxy_port")
   	request = Typhoeus::Request.new(url, options)
