@@ -39,7 +39,7 @@ bundle install
 
 ## Running
 
-The configuration file can be specified by using the `NRQL_EXPORTER_CONFIG` environment variable.
+If a different location is required for the configuration file, this can be specified by using the `NRQL_EXPORTER_CONFIG` environment variable.
 
 ```
 NRQL_EXPORTER_CONFIG=/etc/nrql_exporter.conf ./nrql_exporter
