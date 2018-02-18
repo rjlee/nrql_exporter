@@ -13,8 +13,11 @@ rescue LoadError => e
   # Catch if typhoeus not installed
 end
 
+config_file="nrql_exporter.conf"
+config_file=ENV['NRQL_EXPORTER_CONFIG'] if ENV.has_key?('NRQL_EXPORTER_CONFIG')
+
 begin
-  config = YAML::load_file("nrql_exporter.conf")
+  config = YAML::load_file(config_file)
 rescue StandardError => e
   STDERR.puts "Failed to load configuration file: #{e}"
   exit 1

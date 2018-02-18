@@ -39,4 +39,10 @@ bundle install
 
 ## Running
 
-The script can be run as a daemon using an init script.  This is left as an exercise for the reader.
+The configuration file can be specified by using the `NRQL_EXPORTER_CONFIG` environment variable.
+
+```
+NRQL_EXPORTER_CONFIG=/etc/nrql_exporter.conf ./nrql_exporter
+```
+
+In production, the exporter should be run as a daemon using an init script.  This is left as an exercise for the reader.
