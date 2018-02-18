@@ -1,6 +1,6 @@
 # nrql_exporter
 
-The nrql_exporter is a simple ruby daemon that acts as a prometheus exporter.  It is designed to work with New Relic and allows NRQL queries to be exported in a telegraf format for consumption by tools such as prometheus.
+The nrql_exporter is a simple ruby daemon that acts as a telegraf exporter.  It is designed to work with New Relic and allows NRQL queries to be exported in a telegraf format for consumption by tools such as prometheus.
 
 ## Configuration
 
