@@ -11,7 +11,7 @@ The exporter expects a configuratIon file `nrql_exporter.conf` to be present in 
 The queries are expected to return a single counter value using a label of 'count'.  An example following this format is shown below:
 
 ```
-SELECT count(result) as 'count' FROM SyntheticCheck WHERE monitorName=API'
+SELECT count(result) as 'count' FROM SyntheticCheck WHERE monitorName='API'
 ```
 
 ### Response Cache
