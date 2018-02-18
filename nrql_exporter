@@ -14,7 +14,7 @@ rescue LoadError => e
 end
 
 begin
-  config = YAML::load_file('nrql_exporter.conf')
+  config = YAML::load_file("nrql_exporter.conf")
 rescue StandardError => e
   STDERR.puts "Failed to load configuration file: #{e}"
   exit 1
@@ -45,7 +45,7 @@ def headers(config)
   headers = Hash.new
   headers["Accept"] = "application/json"
   headers["User-Agent"] = "nrql_exporter"
-  headers["X-Query-Key"] = config['nr']['api_key']
+  headers["X-Query-Key"] = config["nr"]["api_key"]
   return headers
 end
 
@@ -119,8 +119,8 @@ def metrics(config)
     help = data["help"]
     type = data["type"]
     count = data["count"]
-    response += "\# HELP #{label} #{help}\n" if data.has_key?("help")
-    response += "\# TYPE #{label} #{type}\n" if data.has_key?("type")
+    response += "\# HELP #{label} #{help}\n" unless help.nil?
+    response += "\# TYPE #{label} #{type}\n" unless type.nil?
     response += "#{config['exporter']['prefix']}#{label} #{count}\n"
   end
   STDERR.puts pp response if config["exporter"]["verbose"]
@@ -136,7 +136,7 @@ end
 requested = Time.now()
 cached_response = ""
 loop do
-  begin
+#  begin
     socket = server.accept
     request = socket.gets
     STDERR.puts request if config["exporter"]["verbose"]
@@ -160,17 +160,17 @@ loop do
         "Connection: close\n"
       socket.print "\n"
     end
-  rescue StandardError => e
-    cached_response = ""
-    begin
-      socket.print "HTTP/1.1 500 Internal Server Error\n" +
-        "Content-Type: text/plain\n" +
-        "Connection: close\n"
-      socket.print "\n"
-      socket.print "Server Error\n"
-    rescue StandardError => e
-      # Captures client disconnect
-    end
-  end
+#  rescue StandardError => e
+#    cached_response = ""
+#    begin
+#      socket.print "HTTP/1.1 500 Internal Server Error\n" +
+#        "Content-Type: text/plain\n" +
+#        "Connection: close\n"
+#      socket.print "\n"
+#      socket.print "Server Error\n"
+#    rescue StandardError => e
+#      # Captures client disconnect
+#    end
+#  end
   socket.close
 end
