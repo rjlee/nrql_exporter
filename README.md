@@ -47,7 +47,7 @@ NRQL_EXPORTER_CONFIG=/etc/nrql_exporter.conf ./nrql_exporter
 
 In production, the exporter should be run as a daemon using an init script.  This is left as an exercise for the reader.
 
-## Docker
+### Docker
 
 The included `Dockerfile` will build an example container but the config will be left as the default. To override this, it is recommended you extend the docker image and copy your own configuration file in:
 
@@ -56,10 +56,13 @@ FROM robjameslee/nrql_exporter:latest
 COPY my_nrql_exporter.conf /nrql_exporter/nrql_exporter.conf
 ```
 
-**Important:** for production usage, I recommend you actually build your own local tag of the base image from this repository rather than pulling it from Docker Hub. The Docker Hub image is unlikely to be updated regularly and therefore may not include recent security fixes.
-
 Alternatively, it is possible to mount a volume for the configuration file with the existing docker container:
 
 ```
 docker run -v "/etc/nrql_exporter:/nrql_exporter/conf/" -e "NRQL_EXPORTER_CONFIG=/nrql_exporter/conf/nrql_exporter.conf" robjameslee/nrql_exporter:latest /nrql_exporter/nrql_exporter
 ```
+
+When using a container, the `host` configuration parameter can be omitted and the exporter will determine the container hostname automatically.
+
+**Important:** for production usage, build your own local tag of the base image from this repository rather than pulling it from Docker Hub. The Docker Hub image is unlikely to be updated regularly and therefore may not include recent security fixes.
+

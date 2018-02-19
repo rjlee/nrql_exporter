@@ -30,8 +30,8 @@ unless config.has_key?("queries") && !config["queries"].empty?
   STDERR.puts "No NRQL queries defined"
   exit 1
 end
-unless config.has_key?("exporter") && config["exporter"].has_key?("host") && config["exporter"].has_key?("port")
-  STDERR.puts "No host and port defined"
+unless config.has_key?("exporter") && config["exporter"].has_key?("port")
+  STDERR.puts "No port defined"
   exit 1
 end
 unless config.has_key?("exporter") && config["exporter"].has_key?("verbose")
@@ -131,7 +131,8 @@ def metrics(config)
 end
 
 begin
-  server = TCPServer.new(config["exporter"]["host"], config["exporter"]["port"])
+    hostname = config["exporter"].has_key?("host") ? config["exporter"]["host"] : Socket.gethostname
+    server = TCPServer.new(config["exporter"]["host"], config["exporter"]["port"])
 rescue StandardError => e
   STDERR.puts "Failed to start server: #{e}"
   exit 1
