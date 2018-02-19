@@ -2,7 +2,7 @@ FROM alpine:latest
 
 # Install system dependencies
 RUN ["apk", "update"]
-RUN ["apk", "add", "ruby", "ruby-bundler", "ruby-dev", "libffi-dev", "musl-dev", "gcc", "make"]
+RUN ["apk", "add", "ruby", "ruby-bundler", "ruby-dev", "ruby-json", "libffi-dev", "musl-dev", "gcc", "make"]
 
 # Set up user and working space
 RUN ["adduser", "-h", "/nrql_exporter", "-D", "nrql_exporter"]
