@@ -22,6 +22,5 @@ RUN ["apk", "del", "ruby-bundler", "ruby-dev", "libffi-dev", "musl-dev", "gcc", 
 
 # Showtime!
 USER "nrql_exporter"
-ENV http_proxy
 ENV NRQL_EXPORTER_CONFIG="/nrql_exporter/nrql_exporter.conf"
 CMD ["/nrql_exporter/nrql_exporter"]
