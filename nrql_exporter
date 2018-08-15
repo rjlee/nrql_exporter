@@ -59,9 +59,22 @@ end
 def parse_response(config, response)
   r = JSON.parse(response.body)
   STDERR.puts pp r if config["exporter"]["verbose"]
-  results = {}
+  results = []
   if r.has_key?("results") && !r["results"].empty?
-    results = r["results"].first
+    results = r["results"]
+  elsif r.has_key?("facets")
+    r["facets"].each do | f |
+      labelledResult = f["results"].first.clone
+      labelledResult["labels"] = {}
+      if r["metadata"]["facet"].kind_of?(Array)
+        r["metadata"]["facet"].each_with_index do | l, i |
+          labelledResult["labels"][l] = f["name"][i]
+        end
+      else
+        labelledResult["labels"][r["metadata"]["facet"]] = f["name"]
+      end
+      results << labelledResult
+    end
   end
   return results
 end
@@ -109,22 +122,33 @@ def metrics(config)
   results = {}
   requests = do_queries(config) if defined?(Typhoeus)
   config["queries"].each do |query|
-    result = defined?(Typhoeus) ? requests[query["name"]] : do_query(config, query["query"])
-    if result.has_key?("count")
-      results[query["name"]] = { "count" => result["count"] }
-      results[query["name"]]["help"] = query["help"] if query.has_key?("help")
-      results[query["name"]]["type"] = query["type"] if query.has_key?("type")
-    end
+    queryResults = defined?(Typhoeus) ? requests[query["name"]] : do_query(config, query["query"])
+    results[query["name"]] = { "results" => queryResults }
+    results[query["name"]]["help"] = query["help"] if query.has_key?("help")
+    results[query["name"]]["type"] = query["type"] if query.has_key?("type")
   end
   response = ""
-  results.each_key do |label|
-    data = results[label]
+  results.each_key do |name|
+    data = results[name]
     help = data["help"]
     type = data["type"]
-    count = data["count"]
-    response += "\# HELP #{label} #{help}\n" unless help.nil?
-    response += "\# TYPE #{label} #{type}\n" unless type.nil?
-    response += "#{config['exporter']['prefix']}#{label} #{count}\n"
+    response += "\# HELP #{name} #{help}\n" unless help.nil?
+    response += "\# TYPE #{name} #{type}\n" unless type.nil?
+    labels = []
+    results[name]["results"].each do |r|
+      labelText = ""
+      count = r["count"]
+      if r.has_key? "labels"
+        r["labels"].each do |k, v|
+          cleanValue = v.gsub("\\", "\\\\").gsub("\"", "\\\"")
+          labels << "#{k}=\"#{cleanValue}\""
+        end
+        unless r["labels"].empty?
+          labelText = "{" + labels.join(",") + "}"
+        end
+      end
+      response += "#{config['exporter']['prefix']}#{name}#{labelText} #{count}\n"
+    end
   end
   STDERR.puts pp response if config["exporter"]["verbose"]
   return response
