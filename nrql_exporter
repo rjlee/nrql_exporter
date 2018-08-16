@@ -118,6 +118,37 @@ def do_queries(config)
   return requests
 end
 
+def build_label_text(result, labels=nil)
+  labels = [] if labels.nil?
+  labelText = ""
+  if result.has_key? "labels"
+    result["labels"].each do |k, v|
+      cleanValue = v.gsub("\\", "\\\\").gsub("\"", "\\\"")
+      labels << "#{k}=\"#{cleanValue}\""
+    end
+    unless result["labels"].empty?
+      labelText = "{" + labels.join(",") + "}"
+    end
+  end
+  return labelText
+end
+
+def build_values(name, result)
+  response = ""
+  if result.has_key? "count"
+    count = result["count"]
+    labelText = build_label_text result
+    response += "#{name}#{labelText} #{count}\n"
+  elsif result.has_key? "percentiles"
+    result["percentiles"].each do |percentile, value|
+      quantile = percentile.to_f / 100
+      labelText = build_label_text(result, ["quantile=\"#{quantile}\""])
+      response += "#{name}#{labelText} #{value}\n"
+    end
+  end
+  return response
+end
+
 def metrics(config)
   results = {}
   requests = do_queries(config) if defined?(Typhoeus)
@@ -135,19 +166,7 @@ def metrics(config)
     response += "\# HELP #{name} #{help}\n" unless help.nil?
     response += "\# TYPE #{name} #{type}\n" unless type.nil?
     results[name]["results"].each do |r|
-      labels = []
-      labelText = ""
-      count = r["count"]
-      if r.has_key? "labels"
-        r["labels"].each do |k, v|
-          cleanValue = v.gsub("\\", "\\\\").gsub("\"", "\\\"")
-          labels << "#{k}=\"#{cleanValue}\""
-        end
-        unless r["labels"].empty?
-          labelText = "{" + labels.join(",") + "}"
-        end
-      end
-      response += "#{config['exporter']['prefix']}#{name}#{labelText} #{count}\n"
+      response += build_values("#{config['exporter']['prefix']}#{name}", r)
     end
   end
   STDERR.puts pp response if config["exporter"]["verbose"]
