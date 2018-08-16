@@ -134,8 +134,8 @@ def metrics(config)
     type = data["type"]
     response += "\# HELP #{name} #{help}\n" unless help.nil?
     response += "\# TYPE #{name} #{type}\n" unless type.nil?
-    labels = []
     results[name]["results"].each do |r|
+      labels = []
       labelText = ""
       count = r["count"]
       if r.has_key? "labels"
