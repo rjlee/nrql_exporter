@@ -139,6 +139,10 @@ def build_values(name, result)
     count = result["count"]
     labelText = build_label_text result
     response += "#{name}#{labelText} #{count}\n"
+  elsif result.has_key? "uniqueCount"
+    uniqueCount = result["uniqueCount"]
+    labelText = build_label_text result
+    response += "#{name}#{labelText} #{uniqueCount}\n"
   elsif result.has_key? "percentiles"
     result["percentiles"].each do |percentile, value|
       quantile = percentile.to_f / 100
