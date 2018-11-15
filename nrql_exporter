@@ -22,7 +22,12 @@ rescue StandardError => e
   STDERR.puts "Failed to load configuration file: #{e}"
   exit 1
 end
-unless config.has_key?("nr") && config["nr"].has_key?("api_key") && config["nr"].has_key?("account_id")
+
+config["nr"]["account_id"] = ENV['NEWRELIC_ACCOUNT_ID'] if ENV.has_key?('NEWRELIC_ACCOUNT_ID')
+config["nr"]["api_key"] = ENV['NEWRELIC_API_KEY'] if ENV.has_key?('NEWRELIC_API_KEY')
+
+unless config.has_key?("nr") && config["nr"].has_key?("api_key") && config["nr"].has_key?("account_id") \
+  && !config["nr"]["api_key"].nil? && !config["nr"]["account_id"].nil?
   STDERR.puts "Missing New Relic configuration"
   exit 1
 end
