@@ -172,8 +172,8 @@ def metrics(config)
     data = results[name]
     help = data["help"]
     type = data["type"]
-    response += "\# HELP #{name} #{help}\n" unless help.nil?
-    response += "\# TYPE #{name} #{type}\n" unless type.nil?
+    response += "\# HELP #{config['exporter']['prefix']}#{name} #{help}\n" unless help.nil?
+    response += "\# TYPE #{config['exporter']['prefix']}#{name} #{type}\n" unless type.nil?
     results[name]["results"].each do |r|
       response += build_values("#{config['exporter']['prefix']}#{name}", r)
     end
