@@ -22,7 +22,12 @@ rescue StandardError => e
   STDERR.puts "Failed to load configuration file: #{e}"
   exit 1
 end
-unless config.has_key?("nr") && config["nr"].has_key?("api_key") && config["nr"].has_key?("account_id")
+
+config["nr"]["account_id"] = ENV['NEWRELIC_ACCOUNT_ID'] if ENV.has_key?('NEWRELIC_ACCOUNT_ID')
+config["nr"]["api_key"] = ENV['NEWRELIC_API_KEY'] if ENV.has_key?('NEWRELIC_API_KEY')
+
+unless config.has_key?("nr") && config["nr"].has_key?("api_key") && config["nr"].has_key?("account_id") \
+  && !config["nr"]["api_key"].nil? && !config["nr"]["account_id"].nil?
   STDERR.puts "Missing New Relic configuration"
   exit 1
 end
@@ -139,6 +144,10 @@ def build_values(name, result)
     count = result["count"]
     labelText = build_label_text result
     response += "#{name}#{labelText} #{count}\n"
+  elsif result.has_key? "uniqueCount"
+    uniqueCount = result["uniqueCount"]
+    labelText = build_label_text result
+    response += "#{name}#{labelText} #{uniqueCount}\n"
   elsif result.has_key? "percentiles"
     result["percentiles"].each do |percentile, value|
       quantile = percentile.to_f / 100
@@ -163,8 +172,8 @@ def metrics(config)
     data = results[name]
     help = data["help"]
     type = data["type"]
-    response += "\# HELP #{name} #{help}\n" unless help.nil?
-    response += "\# TYPE #{name} #{type}\n" unless type.nil?
+    response += "\# HELP #{config['exporter']['prefix']}#{name} #{help}\n" unless help.nil?
+    response += "\# TYPE #{config['exporter']['prefix']}#{name} #{type}\n" unless type.nil?
     results[name]["results"].each do |r|
       response += build_values("#{config['exporter']['prefix']}#{name}", r)
     end

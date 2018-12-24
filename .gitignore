@@ -1,2 +1,4 @@
 nrql_exporter.conf
 Gemfile.lock
+vendor
+.bundle
