@@ -65,4 +65,3 @@ docker run -v "/etc/nrql_exporter:/nrql_exporter/conf/" -e "NRQL_EXPORTER_CONFIG
 When using a container, the `host` configuration parameter can be omitted and the exporter will determine the container hostname automatically.
 
 **Important:** for production usage, build your own local tag of the base image from this repository rather than pulling it from Docker Hub. The Docker Hub image is unlikely to be updated regularly and therefore may not include recent security fixes.
-
