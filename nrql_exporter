@@ -139,6 +139,10 @@ def build_values(name, result)
     count = result["count"]
     labelText = build_label_text result
     response += "#{name}#{labelText} #{count}\n"
+  elsif result.has_key? "uniqueCount"
+    uniquecount = result["uniqueCount"]
+    labelText = build_label_text result
+    response += "#{name}#{labelText} #{uniquecount}\n"
   elsif result.has_key? "percentiles"
     result["percentiles"].each do |percentile, value|
       quantile = percentile.to_f / 100
@@ -163,8 +167,8 @@ def metrics(config)
     data = results[name]
     help = data["help"]
     type = data["type"]
-    response += "\# HELP #{name} #{help}\n" unless help.nil?
-    response += "\# TYPE #{name} #{type}\n" unless type.nil?
+    response += "\# HELP #{config['exporter']['prefix']}#{name} #{help}\n" unless help.nil?
+    response += "\# TYPE #{config['exporter']['prefix']}#{name} #{type}\n" unless type.nil?
     results[name]["results"].each do |r|
       response += build_values("#{config['exporter']['prefix']}#{name}", r)
     end
